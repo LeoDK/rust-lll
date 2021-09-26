@@ -1,4 +1,5 @@
 use std::ops::*;
+use std::clone::Clone;
 use std::fmt::{Display, Result, Formatter};
 
 pub struct Vector<T>
@@ -19,6 +20,22 @@ impl<T> Vector<T>
     }
 }
 
+impl Vector<isize>
+{
+    pub fn zero (dim: usize) -> Self
+    {
+        Vector { coord: vec![0; dim] }
+    }
+}
+
+impl Vector<f64>
+{
+    pub fn zero (dim: usize) -> Self
+    {
+        Vector { coord: vec![0.0; dim] }
+    }
+}
+
 impl<T: Display> Display for Vector<T>
 {
     fn fmt (&self, f: &mut Formatter) -> Result
@@ -34,19 +51,16 @@ impl<T: Display> Display for Vector<T>
     }
 }
 
-impl Vector<isize>
+impl<T: Clone> Clone for Vector<T>
 {
-    pub fn zero (dim: usize) -> Self
+    fn clone (&self) -> Self
     {
-        Vector { coord: vec![0; dim] }
-    }
-}
-
-impl Vector<f64>
-{
-    pub fn zero (dim: usize) -> Self
-    {
-        Vector { coord: vec![0.0; dim] }
+        let mut coord = Vec::<T>::new ();
+        for elem in &self.coord[..]
+        {
+            coord.push (elem.clone ());
+        }
+        Vector::<T> { coord }
     }
 }
 
@@ -140,5 +154,35 @@ where
             ret += self.coord[i] * other.coord[i];
         }
         ret
+    }
+}
+
+impl<T> Mul<T> for &Vector<T>
+where
+    T: Mul<Output=T> + Copy
+{
+    type Output = Vector<T>;
+
+    fn mul (self, other: T) -> Vector<T>
+    {
+        let mut ret = Vector::<T>::new (vec![]);
+        for i in 0..self.size ()
+        {
+            ret.coord.push (other * self.coord[i]);
+        }
+        ret
+    }
+}
+
+impl<T> MulAssign<T> for Vector<T>
+where
+    T: MulAssign + Copy
+{
+    fn mul_assign (&mut self, other: T)
+    {
+        for i in 0..self.size ()
+        {
+            self.coord[i] *= other;
+        }
     }
 }
