@@ -2,12 +2,12 @@ use std::fmt::{Display, Result, Formatter};
 use std::cmp;
 use super::vector::Vector;
 
-// Euclidian Lattice
+// Euclidian lattice
 pub struct Lattice
 {
-    basis: Vec<Vector<f64>>,
-    orth_basis: Vec<Vector<f64>>,
-    mu: Vec<Vec<f64>>
+    basis: Vec<Vector<f64>>, // B
+    orth_basis: Vec<Vector<f64>>, // B*
+    mu: Vec<Vec<f64>> // mu[i,j] = <b_i, b*_j> / || b*_j ||^2
 }
 
 impl Display for Lattice
@@ -20,19 +20,13 @@ impl Display for Lattice
             let s = format!("\n{}", vector);
             ret.push_str (&s);
         }
-
-        ret.push_str ("\n\nB* :");
-        for vector in self.orth_basis.iter ()
-        {
-            let s = format! ("\n{}", vector);
-            ret.push_str (&s);
-        }
         write! (f, "{}", ret)
     }
 }
 
 impl Lattice
 {
+    // Creates lattice from basis
     pub fn new (basis: Vec<Vector<f64>>) -> Lattice
     {
         let orth_basis = basis.clone ();
@@ -42,6 +36,7 @@ impl Lattice
         ret
     }
 
+    // Initialize mu to zeros (mu_i,j is defined for i>=j)
     fn empty_mu (dim: usize) -> Vec<Vec<f64>>
     {
         let mut ret = Vec::<Vec<f64>>::new ();
@@ -63,6 +58,7 @@ impl Lattice
         self.mu[i][j] /= &self.orth_basis[j] & &self.orth_basis[j];
     }
 
+    // Compute the whole B* when given B
     pub fn gram_schmidt (&mut self)
     {
         for i in 0..self.dim ()
@@ -80,6 +76,8 @@ impl Lattice
         }
     }
 
+    // Compute only b*_i and mu_i,j for i>=start
+    // Used to avoid repetition during update
     fn gram_schmidt_from (&mut self, start: usize)
     {
         for i in start..self.dim ()
@@ -123,6 +121,7 @@ impl Lattice
         {
             panic! ("Delta provided for LLL not in bounds !");
         }
+
         let mut k = 1;
         while k < self.dim ()
         {
